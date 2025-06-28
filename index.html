@@ -354,7 +354,7 @@ fetch("https://corsproxy.io/?https://drive.google.com/uc?export=download&id=1Z-J
   });
 
 
-fetch("https://opensheet.elk.sh/1xXzerTOeDSc2kxV6VMZz2Yxsfi4Xwi4KbnvOH1EveSQ/Sheet1")
+fetch("https://opensheet.elk.sh/1s2pkzj5i7MQuxj1nXY5oHxRiCXUQFMSL95OVQR0qf2w/Sheet1")
   .then(res => res.json())
   .then(data => {
     if (!Array.isArray(data)) throw new Error("Data is not array");
@@ -384,7 +384,7 @@ fetch("https://opensheet.elk.sh/1xXzerTOeDSc2kxV6VMZz2Yxsfi4Xwi4KbnvOH1EveSQ/She
       return;
     }
 
-    fetch("https://script.google.com/macros/s/AKfycbyKCbwxGpDnj9O8VOQe_YAyxIsUXg8A3nuH2_vN9S27N7fstxrTWcFLceah4c6crWnZ/exec", {
+    fetch("https://script.google.com/macros/s/AKfycbxNCUGI3p7bMG1qhmPcmT54T9NX5umO_IDaOHCxoGx6cnWkQoOASdshRm2uIaOyXeaB/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(changedItems),
