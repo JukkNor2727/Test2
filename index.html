@@ -1,223 +1,404 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chemical Stock Manager (Google Sheet)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chemical Stock Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f0f9ff;
       --card: #ffffff;
       --primary: #0d9488;
-      --border: #d1d5db;
-      --danger: #fee2e2;
-      --warn:  #fef9c3;
-      --ok:    #dcfce7;
-      --font:  'Prompt', sans-serif;
+      --primary-dark: #0f766e;
+      --border: #e0e0e0;
+      --font: 'Prompt', sans-serif;
+      --danger: #ffe5e5;
+      --warn: #fff7d6;
+      --ok: #e5fbe5;
     }
 
     body {
-      background: var(--bg);
       font-family: var(--font);
+      background-color: var(--bg);
       margin: 0;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
+      padding: 40px 20px;
     }
-
-    h1 { margin: 0 0 8px; font-weight: 600; color: var(--primary); }
-
-    .toolbar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      padding: 8px 16px;
-      border: 1px solid var(--primary);
-      background: var(--primary);
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    button[disabled] { opacity: 0.5; cursor: not-allowed; }
 
     .card {
       background: var(--card);
-      width: 100%;
-      max-width: 1200px;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 18px rgb(0 0 0 / .08);
-      overflow-x: auto;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      max-width: 1400px;
+      margin: auto;
+    }
+
+    h2, h3 {
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      font-family: var(--font);
+    }
+
+    input[type="file"], input[type="text"], input[type="date"], input[type="number"], input[type="text"], button {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .form-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .form-group input {
+      flex: 1 1 200px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
       table-layout: fixed;
-      min-width: 600px;
     }
+
     th, td {
       border: 1px solid var(--border);
-      padding: 6px 8px;
+      padding: 10px;
       text-align: center;
+      vertical-align: middle;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
     }
-    th { background: var(--primary); color: #fff; position: sticky; top: 0; }
-    td[contenteditable="true"] { background: #fffbe6; }
-    tr.new-row td { background: var(--warn); }
+
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+    }
+
+    .danger { background-color: var(--danger); }
+    .warn   { background-color: var(--warn); }
+    .ok     { background-color: var(--ok); }
+
+    #searchBox {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .adjust-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .adjust-buttons button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+    }
+
+    @media (max-width: 768px) {
+      .form-group {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Chemical Stock Manager</h1>
-
-  <div class="toolbar">
-    <button id="loadBtn">Load from Sheet</button>
-    <button id="saveBtn">Save Changes</button>
-    <button id="addBtn">Add Blank Row</button>
-  </div>
-
   <div class="card">
-    <table id="sheetTable"></table>
+    <h2>Chemical_Stock_Data</h2>
+    
+    <button onclick="downloadData('json')">📥 Export JSON</button>
+    <button onclick="downloadData('csv')">📊 Export CSV</button>
+<button onclick="saveToGoogleSheet()">📝 บันทึกไปยัง Google Sheet</button>
+
+    <h3>เพิ่มรายการใหม่</h3>
+    <div class="form-group">
+      <input id="date" type="date" placeholder="Date">
+      <input id="chemical" placeholder="Chemical">
+      <input id="volume" placeholder="Volume">
+      <input id="grade" placeholder="Grade">
+      <input id="received" type="number" placeholder="Received">
+      <input id="remaining" type="number" placeholder="Remaining">
+      <input id="note" placeholder="Note">
+    </div>
+    <button onclick="addItem()">➕ เพิ่มรายการ</button>
+
+    <input type="text" id="searchBox" placeholder="🔍 ค้นหาสาร..." oninput="renderTable()">
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Chemical</th>
+          <th>Volume</th>
+          <th>Grade</th>
+          <th>Received</th>
+          <th>Remaining</th>
+          <th>Note</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="itemList"></tbody>
+    </table>
+
+    <h3>ประวัติการแก้ไข</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Action</th>
+          <th>Chemical</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="historyList"></tbody>
+    </table>
   </div>
 
-<script>
-// ----------------- CONFIG -----------------
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxV0V7KMQ7kPaFeocyBWS1x_UjSUo3TFxs_84T9QSUKwICNujIh9pc_X_yO-uYHYHD3/exec';
 
-// ------------ STATE --------------
-let snapshot = [];      // deep‑clone ของข้อมูลล่าสุดจาก Sheet
-let headers  = [];      // column order ตาม header แถว 1 ของ Sheet
+  <script>
+    let allItems = [];
+    let originalItems = [];
+    let editHistory = [];
 
-// ------------ HELPERS ------------
-const $ = (id) => document.getElementById(id);
 
-function notify(msg, ms = 2500) {
-  const div = document.createElement('div');
-  div.textContent = msg;
-  Object.assign(div.style, {
-    position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-    background: 'var(--primary)', color: '#fff', padding: '8px 14px', borderRadius: '8px',
-    boxShadow: '0 2px 6px rgb(0 0 0 / .2)', zIndex: 9999, transition: 'opacity .3s'
+    function renderTable() {
+      const searchTerm = document.getElementById("searchBox").value.toLowerCase();
+      const tbody = document.getElementById("itemList");
+      tbody.innerHTML = "";
+
+      allItems.forEach((item, index) => {
+        let rawDate = item["date "] || item.date;
+        let date = "-";
+        if (rawDate && !isNaN(new Date(rawDate).getTime())) {
+          date = new Date(rawDate).toISOString().split('T')[0];
+        }
+
+        const chemical = item["chemicals "] || item.chemical || "-";
+        const volume = item["quantity per bottle/drum"] || item.volume || "-";
+        const grade = item["grade"] || "-";
+        const received = item["quantity received (bottle/drum)"] ?? item.received ?? 0;
+        const remaining = item["remaining quantity (bottle/drum)"] ?? item.remaining ?? 0;
+        const note = item["note"] ?? "-";
+
+        if (!chemical.toLowerCase().includes(searchTerm)) return;
+
+        let className = "ok";
+        if (remaining === 0) className = "danger";
+        else if (remaining <= 5) className = "warn";
+
+        const row = document.createElement("tr");
+        row.className = className;
+
+        row.innerHTML = `
+          <td>${date}</td>
+          <td>${chemical}</td>
+          <td>${volume}</td>
+          <td>${grade}</td>
+          <td>
+            <div class="adjust-buttons">
+              <button onclick="adjustReceived(${index}, 1)">+</button>
+              <div>${received}</div>
+              <button onclick="adjustReceived(${index}, -1)">-</button>
+            </div>
+          </td>
+          <td>
+            <div class="adjust-buttons">
+              <button onclick="adjust(${index}, 1)">+</button>
+              <div>${remaining}</div>
+              <button onclick="adjust(${index}, -1)">-</button>
+            </div>
+          </td>
+          <td>${note}</td>
+          <td><button onclick="removeItem(${index})">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById("historyList");
+      tbody.innerHTML = "";
+      editHistory.forEach(entry => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.timestamp}</td>
+          <td>${entry.action}</td>
+          <td>${entry.chemical}</td>
+          <td>${entry.note}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function logHistory(action, chemical, note = "") {
+      editHistory.push({
+        timestamp: new Date().toLocaleString(),
+        action,
+        chemical,
+        note
+      });
+      renderHistory();
+    }
+
+    function getChemicalName(item) {
+      return item["chemicals "] || item.chemical || item["chemical name"] || "-";
+    }
+
+    function adjust(index, delta) {
+      const item = allItems[index];
+      const before = parseInt(item["remaining quantity (bottle/drum)"] ?? item.remaining ?? 0);
+      const updated = before + delta;
+      if (updated < 0) return;
+      item["remaining quantity (bottle/drum)"] = updated;
+      item.note = `Adjusted on ${new Date().toLocaleString()}`;
+      logHistory("Adjust Remaining", getChemicalName(item), `${delta > 0 ? '+' : ''}${delta} → ${updated}`);
+      renderTable();
+    }
+
+    function adjustReceived(index, delta) {
+      const item = allItems[index];
+      const before = parseInt(item["quantity received (bottle/drum)"] ?? item.received ?? 0);
+      const updated = before + delta;
+      if (updated < 0) return;
+      item["quantity received (bottle/drum)"] = updated;
+      item.note = `Adjusted on ${new Date().toLocaleString()}`;
+      logHistory("Adjust Amount", getChemicalName(item), `${delta > 0 ? '+' : ''}${delta} → ${updated}`);
+      renderTable();
+    }
+
+   function addItem() {
+  // First confirmation
+  if (!confirm("คุณต้องการเพิ่มรายการนี้ใช่หรือไม่?")) return;
+
+  // Second confirmation
+  if (!confirm("ยืนยันอีกครั้ง: คุณแน่ใจหรือไม่ว่าจะเพิ่มรายการนี้?")) return;
+
+  const item = {
+    date: document.getElementById("date").value,
+    chemical: document.getElementById("chemical").value,
+    volume: document.getElementById("volume").value,
+    grade: document.getElementById("grade").value,
+    received: parseInt(document.getElementById("received").value) || 0,
+    remaining: parseInt(document.getElementById("remaining").value) || 0,
+    note: document.getElementById("note").value
+  };
+  allItems.push(item);
+  logHistory("Added", item.chemical, "New item added");
+  renderTable();
+  document.querySelectorAll('.form-group input').forEach(i => i.value = '');
+}
+
+    function removeItem(index) {
+      if (confirm(`Delete item: "${allItems[index].chemical}"?`)) {
+        const item = allItems.splice(index, 1)[0];
+        logHistory("Deleted", item.chemical, "Item manually deleted");
+        renderTable();
+      }
+    }
+
+    function downloadData(type) {
+      let content = "";
+      const filename = `chemical_stock_export_${new Date().toISOString().split('T')[0]}.${type}`;
+      if (type === "json") {
+        content = JSON.stringify(allItems, null, 2);
+        downloadFile(content, filename, "application/json");
+      } else if (type === "csv") {
+        const headers = Object.keys(allItems[0]);
+        const rows = allItems.map(obj => headers.map(h => '"' + (obj[h] || '').toString().replace(/"/g, '""') + '"').join(","));
+        content = [headers.join(","), ...rows].join("\n");
+        downloadFile('\uFEFF' + content, filename, "text/csv;charset=utf-8;");
+      }
+    }
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
+  
+fetch("https://corsproxy.io/?https://drive.google.com/uc?export=download&id=1Z-Juq6jC8eCIL84CQtzv17gxrVvQzsFM")
+  .then(response => response.json())
+  .then(data => {
+    allItems = data;
+    renderTable();
+  })
+  .catch(error => {
+    console.error("โหลด JSON ไม่สำเร็จ:", error);
   });
-  document.body.appendChild(div);
-  setTimeout(() => { div.style.opacity = '0'; }, ms - 300);
-  setTimeout(() => div.remove(), ms);
-}
 
-// ------------ LOAD DATA ------------
-async function loadData() {
-  $('loadBtn').disabled = true;
-  try {
-    const res  = await fetch(ENDPOINT);
-    const rows = await res.json();              // array of objects
-    if (!rows.length) return renderTable([], []);
-    headers    = Object.keys(rows[0]);
-    snapshot   = JSON.parse(JSON.stringify(rows));  // deep‑clone
-    renderTable(rows, headers);
-    notify('📥 Data loaded');
-  } catch (err) {
-    console.error(err);
-    alert('โหลดข้อมูลไม่สำเร็จ\n' + err.message);
-  } finally {
-    $('loadBtn').disabled = false;
-  }
-}
 
-// ------------ RENDER TABLE ------------
-function renderTable(rows, hdrs) {
-  const tbl = $('sheetTable');
-  if (!rows.length) {
-    tbl.innerHTML = '<tr><td>No data</td></tr>';
-    return;
-  }
-  // build header
-  tbl.innerHTML = '<thead><tr>' + hdrs.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody></tbody>';
-  const tbody = tbl.tBodies[0];
+fetch("https://opensheet.elk.sh/1xXzerTOeDSc2kxV6VMZz2Yxsfi4Xwi4KbnvOH1EveSQ/Sheet1")
+  .then(res => res.json())
+  .then(data => {
+    if (!Array.isArray(data)) throw new Error("Data is not array");
+    allItems = data.map(item => ({ ...item }));
+    originalItems = data.map(item => ({ ...item }));
+    renderTable();
+  })
+  .catch(err => console.error("โหลดข้อมูลจาก Google Sheets ไม่สำเร็จ:", err));
 
-  rows.forEach((row, idx) => {
-    const tr = document.createElement('tr');
-    tr.dataset.index = idx;
-    tr.innerHTML = hdrs.map(h => {
-      const editable = h !== 'id' ? 'contenteditable="true"' : '';
-      return `<td ${editable}>${row[h] ?? ''}</td>`;
-    }).join('');
-    tbody.appendChild(tr);
-  });
-}
 
-// ------------ SAVE DATA (diff only) ------------
-async function saveData() {
-  $('saveBtn').disabled = true;
-  try {
-    const changed = collectChanges();
-    if (!changed.length) return notify('ไม่มีข้อมูลเปลี่ยนแปลง');
+  function saveToGoogleSheet() {
+    if (!confirm("บันทึกเฉพาะรายการที่มีการเปลี่ยนแปลงไปยัง Google Sheet ใช่หรือไม่?")) return;
 
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(changed)
+    const changedItems = allItems.filter(item => {
+      const original = originalItems.find(o => (o.chemical || o["chemicals "]) === (item.chemical || item["chemicals "]));
+      if (!original) return true;
+
+      return (
+        (item["quantity received (bottle/drum)"] ?? item.received) !== (original["quantity received (bottle/drum)"] ?? original.received) ||
+        (item["remaining quantity (bottle/drum)"] ?? item.remaining) !== (original["remaining quantity (bottle/drum)"] ?? original.remaining) ||
+        (item.note ?? '') !== (original.note ?? '')
+      );
     });
-    const msg = await res.json();
-    notify(`✅ Updated rows: ${msg.updated}`);
-    await loadData();   // รีเฟรชหลังบันทึกเสร็จ
-  } catch (err) {
-    console.error(err);
-    alert('บันทึกไม่สำเร็จ\n' + err.message);
-  } finally {
-    $('saveBtn').disabled = false;
-  }
-}
 
-function collectChanges() {
-  const tblRows = [...$('sheetTable').tBodies[0].rows];
-  const mods = [];
-
-  tblRows.forEach((tr, i) => {
-    const obj = {};
-    [...tr.cells].forEach((td, j) => obj[headers[j]] = td.textContent.trim());
-
-    const original = snapshot[i];
-    // ถ้า original ไม่มี แปลว่าเป็นแถวใหม่
-    if (!original) {
-      if (!obj.id) obj.id = `new_${Date.now()}_${i}`; // สร้าง id ชั่วคราวถ้าไม่มี
-      tr.classList.remove('new-row');
-      mods.push(obj);
+    if (changedItems.length === 0) {
+      alert("ไม่มีรายการที่เปลี่ยนแปลง");
       return;
     }
 
-    const diff = headers.some(h => String(obj[h]) !== String(original[h]));
-    if (diff) mods.push(obj);
-  });
-  return mods;
-}
+    fetch("https://script.google.com/macros/s/AKfycbyKCbwxGpDnj9O8VOQe_YAyxIsUXg8A3nuH2_vN9S27N7fstxrTWcFLceah4c6crWnZ/exec", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(changedItems),
+    })
+    .then(res => res.text())
+    .then(msg => {
+      alert("✅ บันทึกเฉพาะรายการที่มีการเปลี่ยนแปลงแล้ว: " + msg);
+    })
+    .catch(err => {
+      console.error("❌ บันทึกล้มเหลว:", err);
+      alert("❌ เกิดข้อผิดพลาดในการบันทึก");
+    });
+  }
 
-// ------------ ADD BLANK ROW ------------
-function addBlankRow() {
-  if (!headers.length) return alert('กรุณา Load ข้อมูลก่อน');
-  const tbl   = $('sheetTable');
-  const tbody = tbl.tBodies[0];
-  const tr    = document.createElement('tr');
-  tr.classList.add('new-row');
-  tr.innerHTML = headers.map(h => {
-    return `<td contenteditable="${h !== 'id'}"></td>`;
-  }).join('');
-  tbody.appendChild(tr);
-}
-
-// ------------ EVENT BINDINGS ------------
-$('loadBtn').addEventListener('click', loadData);
-$('saveBtn').addEventListener('click', saveData);
-$('addBtn').addEventListener('click', addBlankRow);
-
-document.addEventListener('DOMContentLoaded', loadData);
 </script>
 </body>
 </html>
